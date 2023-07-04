@@ -1,0 +1,13 @@
+if client teacher send TASK request =>
+     Client teacher request (first_1.json, first_2.json): name file or task and students =>
+     Server response: file or task =>
+     Client student get file task or task
+if client student send POST request =>
+    Client student request: your answer or solution (image or answer)
+    (second_1.json,
+    second_2.json,
+    second_3.json) =>
+    Server send solution teacher or check himself
+if client send CONNECT request => connect (third.json)
+if client send DISCONNECT request => connect (third.json)
+
