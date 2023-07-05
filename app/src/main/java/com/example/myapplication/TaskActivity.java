@@ -1,20 +1,12 @@
 package com.example.myapplication;
 
-import static com.example.myapplication.globalClass.activity;
-
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -22,7 +14,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,16 +25,11 @@ import java.util.Date;
 
 public class TaskActivity extends AppCompatActivity {
 
-    private static final int REQUEST_TAKE_PHOTO = 1;
     private static final int TAKE_PICTURE_REQUEST = 1;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
-    private String TAG = "tag_test_11";
     ImageView imageView;
-    private String pictureImagePath = "";
     Uri photoURI;
 
-    private Uri photoUri;
-    private Uri outputFileUri;
     private String currentPhotoPath;
 
     @Override

@@ -22,6 +22,7 @@ public class WebSocket extends WebSocketClient {
      */
 
     private int get_file;
+    private String TAG = "LOG_TAG_WEBSOCKET";
     public WebSocket(URI uri) {
         super(uri);
         get_file = 0;
@@ -47,7 +48,7 @@ public class WebSocket extends WebSocketClient {
     @Override
     public void onTextReceived(String message) {
         // you actions when receive message
-        Log.e("Test", message);
+        Log.e(TAG, message);
         if(get_file != 0){
             if(Objects.equals(message, "None")){
                 get_file = 0;
@@ -59,15 +60,9 @@ public class WebSocket extends WebSocketClient {
             }
         }else {
             if (Objects.equals(message, "TEAM_1")) {
-                StartActivity activity = globalClass.activity;
-                activity.start_game();
+                globalClass.start_game_check = globalClass.CONNECT.START_GAME;
             } else if (Objects.equals(message, "TEAM_0")) {
-                StartActivity activity = globalClass.activity;
-                Toast toast = Toast.makeText(
-                        activity,
-                        "Команда с таким названием уже существует",
-                        Toast.LENGTH_SHORT);
-                toast.show();
+                globalClass.start_game_check = globalClass.CONNECT.ALREADY_EXIST;
             } else if (Objects.equals(message, "file")) {
                 get_file = 1;
             }

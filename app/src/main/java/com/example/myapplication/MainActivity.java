@@ -19,6 +19,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toast.makeText(getApplicationContext(),
+                "Team " + globalClass.teamName + " hello!",
+                Toast.LENGTH_SHORT).show();
         ListView listView = findViewById(R.id.listView);
         adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, globalClass.tasks);
