@@ -30,7 +30,11 @@ public class MainActivity extends AppCompatActivity {
             TextView textView = (TextView) itemClicked;
             String strText = textView.getText().toString();
             Intent i = new Intent(this, TaskActivity.class);
+            boolean typeConditional = true; // get from server
+            int typeSending = 1;
             i.putExtra("nameTask", strText);
+            i.putExtra("typeConditional", typeConditional);
+            i.putExtra("typeSending", typeSending);
             startActivity(i);
         });
     }
