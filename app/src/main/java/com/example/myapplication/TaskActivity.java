@@ -1,26 +1,21 @@
 package com.example.myapplication;
 
-import static androidx.core.content.FileProvider.getUriForFile;
 import static com.example.myapplication.globalClass.activity;
 
-import static java.security.AccessController.getContext;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
-import android.view.KeyEvent;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
@@ -30,23 +25,29 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class TaskActivity extends AppCompatActivity {
 
     private static final int REQUEST_TAKE_PHOTO = 1;
+    private static final int TAKE_PICTURE_REQUEST = 1;
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
     private String TAG = "tag_test_11";
     ImageView imageView;
     private String pictureImagePath = "";
+    Uri photoURI;
 
     private Uri photoUri;
     private Uri outputFileUri;
+    private String currentPhotoPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_task);
+        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         String task_name =
                 (String) getIntent().getSerializableExtra("nameTask");
         boolean typeConditional =
@@ -107,24 +108,7 @@ public class TaskActivity extends AppCompatActivity {
         imageAnswer.setText("photo");
         imageAnswer.setOnClickListener(view -> {
             // TODO: open camera activity
-            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-            File photo = null;
-            try
-            {
-                // place where to store camera taken picture
-                photo = this.createTemporaryFile("picture", ".jpg");
-//                photo.delete();
-            }
-            catch(Exception e)
-            {
-                Log.v(TAG, "Can't create file to take picture!");
-                Toast.makeText(activity, "Please check SD card! Image shot is impossible!", Toast.LENGTH_LONG).show();
-//                return false;
-            }
-            photoUri = getUriForFile(getContext(), "com.mydomain.fileprovider", photo);
-//            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-            //start camera intent
-            startActivityForResult(intent, REQUEST_TAKE_PHOTO);
+            dispatchTakePictureIntent();
         });
         Button sendImageAnswer = new Button(this);
         sendImageAnswer.setText("send");
@@ -158,18 +142,46 @@ public class TaskActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
-//            imageView.setImageURI(outputFileUri);
+        if (requestCode == TAKE_PICTURE_REQUEST && resultCode == RESULT_OK) {
+            imageView.setImageURI(photoURI);
         }
     }
-    private File createTemporaryFile(String part, String ext) throws Exception
-    {
-        File tempDir= Environment.getExternalStorageDirectory();
-        tempDir=new File(tempDir.getAbsolutePath()+"/.temp/");
-        if(!tempDir.exists())
-        {
-            tempDir.mkdirs();
+
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
         }
-        return File.createTempFile(part, ext, tempDir);
+    }
+
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
     }
 }
