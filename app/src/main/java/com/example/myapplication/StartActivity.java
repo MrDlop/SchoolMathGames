@@ -33,23 +33,25 @@ public class StartActivity extends AppCompatActivity {
                 globalClass.dialog = this;
                 EditText teamName = findViewById(R.id.teamName);
                 buttonStart.setOnClickListener(view -> {
-                    try {
-                        if (globalClass.start_game_check != globalClass.CONNECT.START_GAME) {
-                            long edt = IPAddress;
-                            int IPP1 = (int) (edt / Math.pow(256, 3));
-                            int IPP2 = (int) (edt / Math.pow(256, 2) - IPP1 * 256);
-                            int IPP3 = (int) (edt / 256 - IPP2 * 256 - IPP1 * Math.pow(256, 2));
-                            int IPP4 = (int) (edt - IPP3 * 256 - IPP2 * Math.pow(256, 2) - IPP1 * Math.pow(256, 3));
-                            @SuppressLint("DefaultLocale")
-                            String url = String.format("ws://%d.%d.%d.%d:8001", IPP1, IPP2, IPP3, IPP4);
-                            globalClass.webSocket = new WebSocket(new URI(url));
-                            globalClass.teamName = String.valueOf(teamName.getText());
-                            globalClass.webSocket.onConnect(globalClass.teamName);
+                    if (globalClass.start_game_check != globalClass.CONNECT.START_GAME) {
+                        long edt = IPAddress;
+                        int IPP1 = (int) (edt / Math.pow(256, 3));
+                        int IPP2 = (int) (edt / Math.pow(256, 2) - IPP1 * 256);
+                        int IPP3 = (int) (edt / 256 - IPP2 * 256 - IPP1 * Math.pow(256, 2));
+                        int IPP4 = (int) (edt - IPP3 * 256 - IPP2 * Math.pow(256, 2) - IPP1 * Math.pow(256, 3));
+                        @SuppressLint("DefaultLocale")
+                        String host = String.format("ws://%d.%d.%d.%d", IPP1, IPP2, IPP3, IPP4);
+                        int port = 8001;
+                        globalClass.socketClient = new SocketClient(host, port);
+                        globalClass.teamName = String.valueOf(teamName.getText());
+                        if (globalClass.socketClient.onConnect(globalClass.teamName)) {
+                            start_game();
+                        } else {
+                            Toast.makeText(getApplicationContext(),
+                                    "Команда с таким названием уже существует",
+                                    Toast.LENGTH_SHORT).show();
                         }
-                    } catch (URISyntaxException e) {
-                        Toast.makeText(getApplicationContext(),
-                                "Попросите учителя ввести код",
-                                Toast.LENGTH_SHORT).show();
+
                     }
                     dialogInputTeamName.cancel();
                 });
@@ -59,19 +61,6 @@ public class StartActivity extends AppCompatActivity {
             IPAddress = Long.parseLong(String.valueOf(EIPAddress.getText()));
             dialogInputTeamName.show();
         });
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (globalClass.start_game_check == globalClass.CONNECT.START_GAME) {
-            start_game();
-        } else if (globalClass.start_game_check == globalClass.CONNECT.ALREADY_EXIST) {
-            Toast.makeText(getApplicationContext(),
-                    "Команда с таким названием уже существует",
-                    Toast.LENGTH_SHORT).show();
-            globalClass.start_game_check = globalClass.CONNECT.NONE;
-        }
     }
 
     public void start_game() {

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,21 +27,24 @@ public class MainActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, globalClass.tasks);
         listView.setAdapter(adapter);
-        addTask("Разбойник");
-        addTask("Task 1");
+        Button updateButton = findViewById(R.id.buttonUpdate);
+        updateButton.setOnClickListener(view -> {
+            globalClass.socketClient.getNewTasks();
+            while (!globalClass.tasks_queue.isEmpty()) {
+                addTask(globalClass.tasks_queue.peek());
+                globalClass.tasks_queue.remove();
+            }
+        });
 
         listView.setOnItemClickListener((parent, itemClicked, position, id) -> {
             TextView textView = (TextView) itemClicked;
             String strText = textView.getText().toString();
             Intent i = new Intent(this, TaskActivity.class);
-            boolean typeConditional = true; // get from server
-            int typeSending = 1;
             i.putExtra("nameTask", strText);
-            i.putExtra("typeConditional", typeConditional);
-            i.putExtra("typeSending", typeSending);
             startActivity(i);
         });
     }
+
 
     public void addTask(String task) {
         globalClass.tasks.add(task);

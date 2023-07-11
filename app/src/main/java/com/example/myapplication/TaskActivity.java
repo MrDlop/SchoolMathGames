@@ -3,6 +3,9 @@ package com.example.myapplication;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,6 +21,11 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -39,20 +47,38 @@ public class TaskActivity extends AppCompatActivity {
         requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
         String task_name =
                 (String) getIntent().getSerializableExtra("nameTask");
-        boolean typeConditional =
-                (boolean) getIntent().getSerializableExtra("typeConditional");
-        int typeSending =
-                (int) getIntent().getSerializableExtra("typeSending");
+        JSONObject jsonObject = globalClass.socketClient.getTask(task_name);
+        boolean typeConditional;
+        int typeSending;
+        try {
+            typeConditional = jsonObject.getBoolean("typeConditional");
+            typeSending = jsonObject.getInt("typeSending");
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) LinearLayout linearLayout = findViewById(R.id.linearLayout);
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) TextView textView = findViewById(R.id.textView2);
         textView.setText(task_name);
         if (typeConditional) {
             ImageView conditionalView = new ImageView(this);
-            // TODO: get from server image & set image to conditionalView
-            linearLayout.addView(conditionalView);
+            try {
+                byte[] bytes = jsonObject.getString("conditional").getBytes();
+                Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                conditionalView.setImageBitmap(Bitmap.createScaledBitmap(bmp,
+                        conditionalView.getWidth(),
+                        conditionalView.getHeight(),
+                        false));
+                linearLayout.addView(conditionalView);
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
         } else {
             TextView conditionalView = new TextView(this);
-            // TODO: get from server text & set text to conditionalView
+            try {
+                textView.setText(jsonObject.getString("conditional"));
+            } catch (JSONException e) {
+                throw new RuntimeException(e);
+            }
             linearLayout.addView(conditionalView);
         }
 
@@ -66,7 +92,10 @@ public class TaskActivity extends AppCompatActivity {
         Button sendShortAnswer = new Button(this);
         sendShortAnswer.setText("send");
         sendShortAnswer.setOnClickListener(view -> {
-            // send answer to server
+            globalClass.socketClient.sendTask(task_name,
+                    globalClass.teamName,
+                    String.valueOf(shortAnswer.getText()),
+                    0);
         });
         linearLayout0.addView(textView0);
         linearLayout0.addView(shortAnswer);
@@ -82,7 +111,10 @@ public class TaskActivity extends AppCompatActivity {
         Button sendLongAnswer = new Button(this);
         sendLongAnswer.setText("send");
         sendLongAnswer.setOnClickListener(view -> {
-            // TODO: send answer to server
+            globalClass.socketClient.sendTask(task_name,
+                    globalClass.teamName,
+                    String.valueOf(shortAnswer.getText()),
+                    1);
         });
         linearLayout1.addView(textView1);
         linearLayout1.addView(longAnswer);
@@ -96,13 +128,16 @@ public class TaskActivity extends AppCompatActivity {
         Button imageAnswer = new Button(this);
         imageAnswer.setText("photo");
         imageAnswer.setOnClickListener(view -> {
-            // TODO: open camera activity
             dispatchTakePictureIntent();
         });
         Button sendImageAnswer = new Button(this);
         sendImageAnswer.setText("send");
         sendImageAnswer.setOnClickListener(view -> {
-            // TODO: send image to server
+            Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            byte[] imageInByte = baos.toByteArray();
+            globalClass.socketClient.sendTask(task_name, globalClass.teamName, imageInByte);
         });
         imageView = new ImageView(this);
         imageView.setLayoutParams(new ViewGroup.LayoutParams(
