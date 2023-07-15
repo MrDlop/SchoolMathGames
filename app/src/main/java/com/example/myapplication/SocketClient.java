@@ -21,26 +21,38 @@ public class SocketClient {
 
     private final String TAG = "SOCKET";
 
+    public String message;
+
     public SocketClient(String host, int port) {
         this.port = port;
         this.host = host;
     }
 
     String send(String request) {
-        try (
-                Socket socket = new Socket(host, port);
-                BufferedWriter writer = new BufferedWriter(
-                        new OutputStreamWriter(socket.getOutputStream()));
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()))
-        ) {
-            writer.write(request);
-            writer.newLine();
-            writer.flush();
-            return reader.readLine();
-        } catch (IOException e) {
+        Runnable runnable = ()-> {
+            try (
+                    Socket socket = new Socket(host, port);
+                    BufferedWriter writer = new BufferedWriter(
+                            new OutputStreamWriter(socket.getOutputStream()));
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(socket.getInputStream()))
+            ) {
+                writer.write(request);
+                writer.newLine();
+                writer.flush();
+                message = reader.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        Thread thread = new Thread(runnable, "sendThread");
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        return message;
     }
 
     public boolean onConnect(String team_name) {
