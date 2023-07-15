@@ -29,7 +29,7 @@ public class SocketClient {
     }
 
     String send(String request) {
-        Runnable runnable = ()-> {
+        Runnable runnable = () -> {
             try (
                     Socket socket = new Socket(host, port);
                     BufferedWriter writer = new BufferedWriter(

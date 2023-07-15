@@ -40,7 +40,7 @@ public class StartActivity extends AppCompatActivity {
                         int IPP3 = (int) (edt / 256 - IPP2 * 256 - IPP1 * Math.pow(256, 2));
                         int IPP4 = (int) (edt - IPP3 * 256 - IPP2 * Math.pow(256, 2) - IPP1 * Math.pow(256, 3));
                         @SuppressLint("DefaultLocale")
-                        String host = String.format("ws://%d.%d.%d.%d", IPP1, IPP2, IPP3, IPP4);
+                        String host = String.format("%d.%d.%d.%d", IPP1, IPP2, IPP3, IPP4);
                         int port = 8001;
                         globalClass.socketClient = new SocketClient(host, port);
                         globalClass.teamName = String.valueOf(teamName.getText());
