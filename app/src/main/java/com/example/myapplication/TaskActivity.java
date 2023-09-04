@@ -48,10 +48,10 @@ public class TaskActivity extends AppCompatActivity {
         String task_name =
                 (String) getIntent().getSerializableExtra("nameTask");
         JSONObject jsonObject = globalClass.socketClient.getTask(task_name);
-        boolean typeConditional;
+        int typeConditional;
         int typeSending;
         try {
-            typeConditional = jsonObject.getBoolean("typeConditional");
+            typeConditional = jsonObject.getInt("typeConditional");
             typeSending = jsonObject.getInt("typeSending");
         } catch (JSONException e) {
             throw new RuntimeException(e);
@@ -59,19 +59,16 @@ public class TaskActivity extends AppCompatActivity {
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) LinearLayout linearLayout = findViewById(R.id.linearLayout);
         @SuppressLint({"MissingInflatedId", "LocalSuppress"}) TextView textView = findViewById(R.id.textView2);
         textView.setText(task_name);
-        if (typeConditional) {
+        if (typeConditional == 1) {
             ImageView conditionalView = new ImageView(this);
-            try {
-                byte[] bytes = jsonObject.getString("conditional").getBytes();
-                Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                conditionalView.setImageBitmap(Bitmap.createScaledBitmap(bmp,
-                        conditionalView.getWidth(),
-                        conditionalView.getHeight(),
-                        false));
-                linearLayout.addView(conditionalView);
-            } catch (JSONException e) {
-                throw new RuntimeException(e);
-            }
+            Bitmap bmp = BitmapFactory.decodeByteArray(globalClass.bytes,
+                    0,
+                    globalClass.bytes.length);
+            conditionalView.setImageBitmap(Bitmap.createScaledBitmap(bmp,
+                    conditionalView.getWidth(),
+                    conditionalView.getHeight(),
+                    false));
+            linearLayout.addView(conditionalView);
         } else {
             TextView conditionalView = new TextView(this);
             try {

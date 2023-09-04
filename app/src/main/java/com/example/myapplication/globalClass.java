@@ -19,5 +19,7 @@ public class globalClass {
     public static ArrayList<String> tasks = new ArrayList<>();
     public static Dialog dialog;
     public static String teamName;
+
+    public static byte[] bytes;
     public static Queue<String> tasks_queue = new PriorityQueue<>();
 }

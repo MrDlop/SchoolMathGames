@@ -41,6 +41,7 @@ public class SocketClient {
                 writer.newLine();
                 writer.flush();
                 message = reader.readLine();
+                Log.i(TAG, message);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -73,6 +74,7 @@ public class SocketClient {
         String message = this.send("{" +
                 "\"type_request\":\"NEW_TASK\"," +
                 "\"type_man\":\"student\"," +
+                "\"name\":\"" + globalClass.teamName + "\"" +
                 "}");
         try {
             JSONObject response = new JSONObject(message);
@@ -86,11 +88,42 @@ public class SocketClient {
     }
 
     public JSONObject getTask(String task_name) {
-        String message = this.send("{" +
-                "\"type_request\":\"GET\"," +
-                "\"type_man\":\"student\"," +
-                "\"task_name\":\"" + task_name + "\"" +
-                "}");
+        Runnable runnable = () -> {
+            try (
+                    Socket socket = new Socket(host, port);
+                    BufferedWriter writer = new BufferedWriter(
+                            new OutputStreamWriter(socket.getOutputStream()));
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(socket.getInputStream()))
+            ) {
+                writer.write("{" +
+                        "\"type_request\":\"GET\"," +
+                        "\"type_man\":\"student\"," +
+                        "\"task_name\":\"" + task_name + "\"" +
+                        "}");
+                writer.newLine();
+                writer.flush();
+                message = reader.readLine();
+                Log.i(TAG, message);
+                if (message.equals("file")) {
+                    int n = Integer.parseInt(reader.readLine());
+                    globalClass.bytes = new byte[n];
+                    for (int i = 0; i < n; ++i) {
+                        globalClass.bytes[i] = (byte) Integer.parseInt(reader.readLine());
+                    }
+                    message = reader.readLine();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        Thread thread = new Thread(runnable, "sendThread");
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         try {
             return new JSONObject(message);
         } catch (JSONException e) {
@@ -102,22 +135,58 @@ public class SocketClient {
         this.send("{" +
                 "\"type_request\":\"SEND\"," +
                 "\"type_man\":\"student\"," +
-                "\"task_name\":\"" + task_name + "\"" +
-                "\"team_name\":\"" + team_name + "\"" +
-                "\"type_answer\":" + type +
+                "\"task_name\":\"" + task_name + "\"," +
+                "\"team_name\":\"" + team_name + "\"," +
+                "\"type_answer\":" + type + "," +
                 "\"answer\":\"" + answer + "\"" +
                 "}");
     }
 
     public void sendTask(String task_name, String team_name, byte[] answer) {
-        String str_answer = new String(answer, StandardCharsets.UTF_8);
-        this.send("{" +
-                "\"type_request\":\"SEND\"," +
-                "\"type_man\":\"student\"," +
-                "\"task_name\":\"" + task_name + "\"" +
-                "\"team_name\":\"" + team_name + "\"" +
-                "\"type_answer\":2" +
-                "\"answer\":\"" + str_answer + "\"" +
-                "}");
+        Runnable runnable = () -> {
+            try (
+                    Socket socket = new Socket(host, port);
+                    BufferedWriter writer = new BufferedWriter(
+                            new OutputStreamWriter(socket.getOutputStream()));
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(socket.getInputStream()))
+            ) {
+                for (int i = 0, pi = 0; i < answer.length; ++i) {
+                    if (i % 4048 == 0) {
+                        int type = 0;
+                        if (i != 0) {
+                            type = 1;
+                            writer.flush();
+                        }
+                        writer.write("{" +
+                                "\"type_request\":\"SEND\"," +
+                                "\"type_man\":\"student\"," +
+                                "\"task_name\":\"" + task_name + "\"," +
+                                "\"team_name\":\"" + team_name + "\"," +
+                                "\"type_answer\":2," +
+                                "\"type_send\":" + type + "," +
+                                "\"len\":" + Math.min(4048, answer.length - i) + "," +
+                                "\"send_size\"" + (i + Math.min(4048, answer.length - i)) + "," +
+                                "\"full_size\":" + answer.length +
+                                "}");
+                        writer.newLine();
+                    }
+                    Log.i(TAG, i + " " + String.valueOf(answer[i]));
+                    writer.write(answer[i]);
+                    writer.newLine();
+                }
+                writer.flush();
+                message = reader.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        Thread thread = new Thread(runnable, "sendThread");
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
